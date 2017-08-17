@@ -1,5 +1,12 @@
 #!/bin/env python
+"""
+JSON Dripper
 
+Connects to HOST and downloads all folders from JSON_DIRS
+at the speed defined by MAX_BANDWIDTH.
+The local destination folder is added a prefix of acs_.
+It checks that the remote dir is a number (000, 001...).
+"""
 import logging
 import paramiko
 from subprocess import Popen, PIPE
@@ -52,13 +59,24 @@ def drip():
     modifying the destination with a 'acs_' prefix.
     """
     log = logging.getLogger('dripper')
+    log.debug("Starting dripping from all remote dirs.")
     t, stfp = connect()
     dirs = sftp.listdir(JSON_DIRS)
     del sftp
     del t
+    log.debug("Connected and got dir names %s." % str(dirs))
     for json_dir in [d for d in dirs if d.isdigit()]:
         src = "%s/" % join(JSON_DIRS, json_dir)
         dst = join(JSON_DST, 'acs_%s/' % json_dir)
+        log.debug("Downloading %s to %s at rate %d KB/s." % (src, dst, MAX_BANDWIDTH))
         drip_rsync(src, dst)
+        log.debug("Finished with remote %s." % src)
 
 
+def main():
+    while True:
+        drip()
+        
+
+if __name__ == '__main__':
+    main()
