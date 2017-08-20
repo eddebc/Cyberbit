@@ -16,10 +16,10 @@ from os.path import join, expanduser
 
 HOST = '10.1.30.34'  # Natanya
 USER = 'root'
-KEY = join(expanduser('~'), ".ssh/id_rsa")
+KEY = expanduser("~/.ssh/id_rsa")
 JSON_DIRS = "/data1/dripper_in/04-07-2017/000/"
 JSON_DST = "/share/host"
-MAX_BANDWIDTH = 2*1024  # in KB
+MAX_BANDWIDTH = 12*1024  # in KB
 LOG = "/tmp/dripper.log"
 
 logging.basicConfig(
