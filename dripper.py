@@ -67,7 +67,7 @@ def drip():
     log.debug("Connected and got dir names %s." % str(dirs))
     for json_dir in [d for d in dirs if d.isdigit()]:
         src = "%s/" % join(JSON_DIRS, json_dir)
-        dst = join(JSON_DST, 'acs_%s/' % json_dir)
+        dst = "%s/" % join(JSON_DST, 'acs_%s' % json_dir)
         log.debug("Downloading %s to %s at rate %d KB/s." % (src, dst, MAX_BANDWIDTH))
         drip_rsync(src, dst)
         log.debug("Finished with remote %s." % src)
