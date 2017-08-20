@@ -6,16 +6,18 @@ Connects to HOST and downloads all folders from JSON_DIRS
 at the speed defined by MAX_BANDWIDTH.
 The local destination folder is added a prefix of acs_.
 It checks that the remote dir is a number (000, 001...).
+
+Requites ssh key added to remote host.
 """
 import logging
 import paramiko
 from subprocess import Popen, PIPE
-from os.path import join
+from os.path import join, expanduser
 
 HOST = '10.1.30.34'  # Natanya
 USER = 'root'
-KEY = '~/.ssh/id_rsa'
-JSON_DIRS = "/data1/"
+KEY = join(expanduser('~'), ".ssh/id_rsa")
+JSON_DIRS = "/data1/dripper_in/04-07-2017/000/"
 JSON_DST = "/share/host"
 MAX_BANDWIDTH = 2*1024  # in KB
 LOG = "/tmp/dripper.log"
@@ -60,7 +62,7 @@ def drip():
     """
     log = logging.getLogger('dripper')
     log.debug("Starting dripping from all remote dirs.")
-    t, stfp = connect()
+    t, sftp = connect()
     dirs = sftp.listdir(JSON_DIRS)
     del sftp
     del t
