@@ -4,14 +4,16 @@ JSON Dripper
 
 Connects to HOST and downloads all folders from JSON_DIRS
 at the speed defined by MAX_BANDWIDTH.
-The local destination folder is added a prefix of acs_.
+The prefix acs_ is added to the local destination folder.
 It checks that the remote dir is a number (000, 001...).
 
-Requites ssh key added to remote host.
+Requites ssh pub key added to remote host.
 """
 import logging
 import paramiko
+from pwd import getpwnam
 from subprocess import Popen, PIPE
+from os import walk, chown
 from os.path import join, expanduser
 
 HOST = '10.1.30.34'  # Natanya
@@ -34,9 +36,28 @@ def drip_rsync(src, dst):
     returning the output of the command.
     """
     bw = "--bwlimit=%d" % MAX_BANDWIDTH
-    args = ['rsync', '-az', '-b', bw, src, dst]
+    args = ['rsync', '-az', bw, '%s:%s' % (HOST, src), dst]
     p = Popen(args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
+    #print ' '.join(args)
+    #p = Popen(' '.join(args), shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
     return p.communicate()
+
+
+def chown_recursive(path, username):
+    """
+    Changes ownership of all files under path
+    to username:username (his own group) but does
+    not go deeper than one level.
+    """
+    user = getpwnam(username)
+    uid, gid = user.pw_uid, user.pw_gid
+    chown(path, uid, gid)
+    for _, _, files in walk(path):
+        for f in files:
+            try:
+                chown(f, uid, gid)
+            except OSError:  # Files are yanked from under our feet
+                pass
 
 
 def connect():
@@ -71,8 +92,11 @@ def drip():
         src = "%s/" % join(JSON_DIRS, json_dir)
         dst = "%s/" % join(JSON_DST, 'acs_%s' % json_dir)
         log.debug("Downloading %s to %s at rate %d KB/s." % (src, dst, MAX_BANDWIDTH))
-        drip_rsync(src, dst)
-        log.debug("Finished with remote %s." % src)
+        out, err = drip_rsync(src, dst)
+        if err:
+            log.error("Error rsyncing %s. %s" % (src, err))
+        log.debug("Finished with remote %s. %s." % (src, out))
+        chown_recursive(dst, 'apd')
 
 
 def main():
